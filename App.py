@@ -86,16 +86,29 @@ try:
             with st.form("prediction_form"):
                 inputs = []
                 for col in X.columns:
-                    val = st.text_input(f"Masukkan nilai untuk '{col}'")
-                    inputs.append(val)
+                    if col in label_encoders:
+                        options = label_encoders[col].classes_.tolist()
+                        val = st.selectbox(f"Pilih nilai untuk '{col}'", options)
+                        encoded_val = label_encoders[col].transform([val])[0]
+                        inputs.append(encoded_val)
+                    else:
+                        val = st.text_input(f"Masukkan nilai numerik untuk '{col}'")
+                        try:
+                            val = float(val)
+                        except:
+                            val = None
+                        inputs.append(val)
 
                 submitted = st.form_submit_button("Prediksi")
                 if submitted:
                     try:
-                        input_array = np.array(inputs).astype(float).reshape(1, -1)
-                        prediction = clf.predict(input_array)[0]
-                        result = "Positif" if prediction == 1 else "Negatif"
-                        st.success(f"Hasil Prediksi: {result}")
+                        if None in inputs:
+                            st.error("Harap masukkan semua nilai numerik dengan benar.")
+                        else:
+                            input_array = np.array(inputs).reshape(1, -1)
+                            prediction = clf.predict(input_array)[0]
+                            result = "Positif" if prediction == 1 else "Negatif"
+                            st.success(f"Hasil Prediksi: {result}")
                     except Exception as e:
                         st.error(f"Input tidak valid: {e}")
     else:
